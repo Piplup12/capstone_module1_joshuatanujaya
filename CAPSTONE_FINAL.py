@@ -167,6 +167,24 @@ def change_grade_for_student():
 
 # Function to display the rankings and students below KKM (default set to 75)
 def view_ranks_and_students_below_kkm(student_data, lesson):
+    attempts = 0
+
+    # Attempt to get a valid lesson name
+    while attempts < 3:
+        if lesson in lessons:
+            break  # Valid lesson name, exit loop
+        else:
+            attempts += 1
+            print(f"{lesson} is not a valid lesson. {3 - attempts} attempts left.")
+            if attempts < 3:
+                lesson = input("Enter the lesson to view ranks: ")
+    
+    # If too many invalid attempts, return to the main menu
+    if attempts >= 3:
+        print("Too many invalid attempts. Returning to the menu.")
+        return
+
+    # Sort students by their score for the selected lesson
     sorted_students = sorted(student_data, key=lambda x: x['scores'][lesson], reverse=True)
     
     # Display the ranking in a table format for the selected lesson
@@ -176,6 +194,7 @@ def view_ranks_and_students_below_kkm(student_data, lesson):
     for rank, student in enumerate(sorted_students, start=1):
         print(f"{rank:<5} | {student['name']:<10} | {student['scores'][lesson]:<5}")
     
+    # Display students below the KKM threshold
     print(f"\nStudents with scores below KKM ({lesson}, KKM={KKM}):")
     print(f"{'Name':<10} | {'Score':<5}")
     print("-" * 17)
@@ -197,6 +216,47 @@ def erase_all_grades():
     else:
         print("Operation canceled. No grades were erased.")
 
+# Add new student if there is a new student admitted
+def add_new_student():
+    student_name = input("Enter the new student's name: ")
+    
+    # Check if the student already exists
+    if next((s for s in students if s['name'] == student_name), None):
+        print(f"Student {student_name} already exists.")
+        return
+
+    # Create a new student record
+    new_student = {'name': student_name, 'scores': {}}
+
+    for lesson in lessons:
+        grade_input = input(f"Enter {student_name}'s grade for {lesson} (or leave blank if not available): ")
+        grade = validate_grade_input(grade_input)
+        if grade is not None:
+            new_student['scores'][lesson] = grade
+
+    # Add the new student to the student list
+    students.append(new_student)
+    print(f"New student {student_name} has been added successfully.")
+
+# Delete student data if student being withdrawn
+def delete_student():
+    student_name = input("Enter the name of the student to delete: ")
+
+    # Check if the student exists
+    student = next((s for s in students if s['name'] == student_name), None)
+    if not student:
+        print(f"No student found with the name {student_name}.")
+        return
+
+    # Confirm deletion
+    confirmation = input(f"Are you sure you want to delete all data for {student_name}? (yes/no): ").lower()
+    if confirmation == 'yes':
+        # Remove student from the list
+        students.remove(student)
+        print(f"All data for {student_name} has been deleted.")
+    else:
+        print(f"Student {student_name} has not been deleted.")
+
 # Function to validate teacher's password
 def validate_teacher_password():
     teacher_password = "ABC123"
@@ -216,14 +276,15 @@ def validate_teacher_password():
 # Main teacher menu function
 def teacher_menu():
     if validate_teacher_password():
-        attempts = 0  # Initialize attempts counter
+        attempts = 0
         while attempts < 3:
             print("\nTeacher Menu:")
             print("1. View student ranks")
             print("2. Input grades")
             print("3. Change a student's grade")
-            print("4. Erase all grades (New Academic Period)")
-            print("5. Exit")
+            print("4. Add a new student")
+            print("5. Delete a student")
+            print("6. Exit")
             choice = input("Enter your choice: ")
 
             if choice == "1":
@@ -232,25 +293,26 @@ def teacher_menu():
                 attempts = 0  # Reset attempts after a valid choice
             elif choice == "2":
                 input_grade_for_student()
-                attempts = 0  # Reset attempts after a valid choice
+                attempts = 0
             elif choice == "3":
                 change_grade_for_student()
-                attempts = 0  # Reset attempts after a valid choice
+                attempts = 0
             elif choice == "4":
-                erase_all_grades()
-                attempts = 0  # Reset attempts after a valid choice
+                add_new_student()
+                attempts = 0
             elif choice == "5":
+                delete_student()
+                attempts = 0
+            elif choice == "6":
                 print("Exiting...")
                 break
             else:
                 attempts += 1
-                print(f"Invalid choice, {3 - attempts} attempts left.")
-
-            # If more than 3 invalid choices, exit to main menu
-            if attempts >= 3:
-                print("Too many invalid attempts. Returning to the main menu...")
-                main_menu()
-                break
+                print(f"Invalid choice. {3 - attempts} attempts left.")
+        
+        if attempts >= 3:
+            print("Too many invalid attempts. Returning to the main menu.")
+            main_menu()
 
 def student_menu():
     attempts = 0  # Initialize attempts counter for student name validation
@@ -290,12 +352,23 @@ def student_menu():
             display_grades(student)
             attempts = 0  # Reset attempts after a valid choice
         elif choice == "2":
-            lesson = input("Enter the lesson to view ranks: ")
-            if lesson in lessons:
-                view_ranks_and_students_below_kkm(students, lesson)
-                attempts = 0  # Reset attempts after a valid choice
-            else:
-                print(f"{lesson} is not a valid lesson.")
+            # Add attempts for lesson name validation
+            lesson_attempts = 0
+            while lesson_attempts < 3:
+                lesson = input("Enter the lesson to view ranks: ")
+                if lesson in lessons:
+                    view_ranks_and_students_below_kkm(students, lesson)
+                    attempts = 0  # Reset attempts after a valid choice
+                    break  # Exit lesson input loop if valid lesson is entered
+                else:
+                    lesson_attempts += 1
+                    print(f"{lesson} is not a valid lesson. {3 - lesson_attempts} attempts left.")
+
+            # If too many invalid lesson attempts, exit to main menu
+            if lesson_attempts >= 3:
+                print("Too many invalid attempts for lesson. Returning to the main menu...")
+                main_menu()
+                return
         elif choice == "3":
             print("Exiting...")
             break
