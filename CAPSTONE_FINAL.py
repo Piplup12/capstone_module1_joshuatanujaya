@@ -206,16 +206,6 @@ def view_ranks_and_students_below_kkm(student_data, lesson):
     else:
         print("All students passed the KKM.")
 
-# Function to erase all student grades for a new academic period
-def erase_all_grades():
-    confirmation = input("Are you sure you want to erase all grades? This action cannot be undone. (Yes/No): ")
-    if confirmation.lower() == "yes":
-        for student in students:
-            student['scores'] = {lesson: None for lesson in lessons}
-        print("All grades have been erased. You can now input new grades for the new academic period.")
-    else:
-        print("Operation canceled. No grades were erased.")
-
 # Add new student if there is a new student admitted
 def add_new_student():
     student_name = input("Enter the new student's name: ")
